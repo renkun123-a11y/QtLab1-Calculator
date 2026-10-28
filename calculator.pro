@@ -5,4 +5,7 @@ TARGET    = Calculator
 CONFIG   += c++17 release
 CONFIG   -= debug_and_release debug
 
-SOURCES  += main.cpp
+HEADERS  += mainwindow.h
+SOURCES  += main.cpp \
+            mainwindow.cpp
+FORMS    += mainwindow.ui

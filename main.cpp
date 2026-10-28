@@ -1,21 +1,18 @@
 #include <QApplication>
-#include <QLabel>
-#include <QMainWindow>
+#include <QFont>
+#include "mainwindow.h"
 
 // 实验 1：带键盘事件的计算器
-// 当前阶段仅搭建工程骨架，确认 qmake / MinGW 编译链可用，界面随后实现。
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QMainWindow window;
-    window.setWindowTitle(QStringLiteral("带键盘事件的计算器"));
+    // 统一中文界面字体，避免不同系统上中英文混排字重不一致
+    QFont font(QStringLiteral("Microsoft YaHei UI"));
+    font.setPointSize(10);
+    app.setFont(font);
 
-    auto *placeholder = new QLabel(QStringLiteral("工程骨架（界面待实现）"), &window);
-    placeholder->setAlignment(Qt::AlignCenter);
-    window.setCentralWidget(placeholder);
-
-    window.resize(420, 660);
+    MainWindow window;
     window.show();
     return app.exec();
 }
