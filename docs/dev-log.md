@@ -139,3 +139,46 @@ case State::EnteringSecondOperand: {
     break;                      // 上一步的结果成为新的左操作数
 }
 ```
+
+## 阶段 6　键盘事件（commit 6）
+
+做法：新增 `Calc::keyFromQtKey()` 把 `Qt::Key_*` 翻译成 `Calc::Key`，
+和鼠标点击一样交给 `dispatchKey()`，**两条路径只有"翻译"不同**：
+
+```cpp
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) {
+        QMainWindow::keyPressEvent(event);      // Ctrl/Alt/Meta 组合留给系统快捷键
+        return;
+    }
+    const std::optional<Calc::Key> key = Calc::keyFromQtKey(event->key());
+    if (!key.has_value()) {
+        QMainWindow::keyPressEvent(event);
+        return;
+    }
+    flashButton(*key);   // 键盘按下时对应按键同步"按下"
+    dispatchKey(*key);   // 与鼠标同一个入口
+    event->accept();
+}
+```
+
+键位映射（也已写进每个按键的 tooltip）：
+
+| 功能 | 键位 | 功能 | 键位 |
+| --- | --- | --- | --- |
+| 数字 | `0`-`9`、小键盘 | 等号 | `Enter`、`=` |
+| 加 / 减 | `+` / `-` | 乘 / 除 | `*` 或 `x` / `/` |
+| 小数点 | `.` 或 `,` | 退格 | `Backspace` |
+| 全部清除 | `Esc` 或 `C` | 清除当前输入 | `Delete` 或 `E` |
+| 正负号 | `N` 或 `F9` | 百分号 | `%` |
+| 1/x | `P` | x² / √x | `S` / `R` |
+
+键盘与鼠标一致性验证（同一串输入分别用两种方式输入）：
+
+| 输入序列 | 鼠标结果 | 键盘结果 |
+| --- | --- | --- |
+| `12.5 × 4 =` | `50` | `50` |
+| `8 ÷ 0 =` | `除数不能为 0` | `除数不能为 0` |
+| `123 ← ←` | `1` | `1` |
+| 混合输入：`1`(鼠标) `2`(键盘) `+`(鼠标) `3`(键盘) `=`(鼠标) | `15` | — |

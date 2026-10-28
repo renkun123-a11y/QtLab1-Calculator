@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include <optional>
+
 // 计算器按键的"统一令牌"。
 //
 // 鼠标点击和键盘按键最终都会被翻译成同一个 Calc::Key，再交给
@@ -49,6 +51,9 @@ QString operatorSymbol(Key key);
 // UI 设计器里用动态属性 "calcKey" 保存的字符串令牌，与 Key 互转
 QString keyToToken(Key key);
 bool keyFromToken(const QString &token, Key *key);
+
+// 键盘按键（Qt::Key_*）到计算器按键的映射；不参与计算的键返回空
+std::optional<Key> keyFromQtKey(int qtKey);
 
 } // namespace Calc
 

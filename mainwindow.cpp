@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QKeyEvent>
+#include <QPushButton>
+#include <QTimer>
+
 #include "calculatorengine.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,6 +24,25 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    // Ctrl / Alt / Meta 组合键留给系统快捷键（如 Ctrl+C 复制），不参与计算
+    if (event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) {
+        QMainWindow::keyPressEvent(event);
+        return;
+    }
+
+    const std::optional<Calc::Key> key = Calc::keyFromQtKey(event->key());
+    if (!key.has_value()) {
+        QMainWindow::keyPressEvent(event);   // 与计算无关的键交给基类
+        return;
+    }
+
+    flashButton(*key);      // 键盘输入时让对应按键同步"按下"，鼠标与键盘表现一致
+    dispatchKey(*key);      // 与鼠标点击走同一个入口
+    event->accept();
 }
 
 void MainWindow::uniformKeypadStretch()
@@ -47,6 +70,17 @@ void MainWindow::connectKeypad()
 void MainWindow::dispatchKey(Calc::Key key)
 {
     m_engine->press(key);
+}
+
+void MainWindow::flashButton(Calc::Key key)
+{
+    QPushButton *button = m_buttonsByKey.value(static_cast<int>(key), nullptr);
+    if (!button)
+        return;
+
+    button->setDown(true);
+    // 120ms 后恢复；用 QTimer 而不是阻塞等待，避免界面卡顿
+    QTimer::singleShot(120, button, [button] { button->setDown(false); });
 }
 
 void MainWindow::refreshDisplay()
