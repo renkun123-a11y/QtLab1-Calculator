@@ -42,6 +42,9 @@ private:
     // 键盘按下时让对应按键短暂显示"按下"效果，便于确认键位映射
     void flashButton(Calc::Key key);
 
+    // 从 :/styles/app.qss 载入界面样式表
+    void applyStyleSheet();
+
     // 把计算核心的状态显示到界面上
     void refreshDisplay();
 

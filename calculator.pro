@@ -13,3 +13,4 @@ SOURCES  += calckey.cpp \
             main.cpp \
             mainwindow.cpp
 FORMS    += mainwindow.ui
+RESOURCES += resources.qrc

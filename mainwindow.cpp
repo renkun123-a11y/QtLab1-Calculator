@@ -1,8 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QFile>
 #include <QKeyEvent>
 #include <QPushButton>
+#include <QStyle>
 #include <QTimer>
 
 #include "calculatorengine.h"
@@ -13,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_engine(new CalculatorEngine(this))
 {
     ui->setupUi(this);
+    applyStyleSheet();
     uniformKeypadStretch();
     connectKeypad();
 
@@ -47,9 +50,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::uniformKeypadStretch()
 {
-    for (int row = 0; row < 6; ++row)
+    // 行列数直接问布局要，避免在代码里硬编码 6 / 4 这样的魔法数字
+    for (int row = 0; row < ui->keypadLayout->rowCount(); ++row)
         ui->keypadLayout->setRowStretch(row, 1);
-    for (int column = 0; column < 4; ++column)
+    for (int column = 0; column < ui->keypadLayout->columnCount(); ++column)
         ui->keypadLayout->setColumnStretch(column, 1);
 }
 
@@ -83,10 +87,28 @@ void MainWindow::flashButton(Calc::Key key)
     QTimer::singleShot(120, button, [button] { button->setDown(false); });
 }
 
+void MainWindow::applyStyleSheet()
+{
+    QFile file(QStringLiteral(":/styles/app.qss"));
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;   // 资源缺失时退回 mainwindow.ui 里的默认外观，不影响功能
+
+    setStyleSheet(QString::fromUtf8(file.readAll()));
+}
+
 void MainWindow::refreshDisplay()
 {
     const QString text = m_engine->displayText();
     ui->displayEdit->setText(text);
     ui->displayEdit->setCursorPosition(text.size());   // 数字过长时始终显示末尾几位
     ui->expressionLabel->setText(m_engine->expressionText());
+
+    // 错误状态改用红色显示：QSS 无法直接读取 C++ 状态，用动态属性 + 重新 polish 通知样式表
+    const bool hasError = m_engine->hasError();
+    if (ui->displayEdit->property("calcError").toBool() != hasError) {
+        ui->displayEdit->setProperty("calcError", hasError);
+        ui->displayEdit->style()->unpolish(ui->displayEdit);
+        ui->displayEdit->style()->polish(ui->displayEdit);
+        ui->displayEdit->update();
+    }
 }

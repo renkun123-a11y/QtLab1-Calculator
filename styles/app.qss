@@ -1,0 +1,99 @@
+/* ==========================================================================
+   计算器界面样式表
+   参考 Windows 计算器的浅色配色：白色显示区 + 浅灰键盘分隔线 + 蓝色等号键。
+   键盘区的"网格线"由 QGridLayout 的 2px 间距透出 keypadWidget 的底色实现。
+   ========================================================================== */
+
+/* ---------- 窗口 ---------- */
+QWidget#centralWidget {
+    background: #eef1f5;
+}
+
+/* ---------- 显示区 ---------- */
+QFrame#displayFrame {
+    background: #ffffff;
+    border: none;
+    border-bottom: 2px solid #dfe3e8;
+}
+
+QLabel#expressionLabel {
+    color: #8b95a1;
+    font-size: 15px;
+    padding-right: 2px;
+    border: none;
+    background: transparent;
+}
+
+QLineEdit#displayEdit {
+    background: transparent;
+    border: none;
+    color: #202124;
+    font-size: 40px;
+    font-weight: bold;
+    padding: 0 2px 6px 0;
+}
+
+/* 错误提示（除数为 0 等）用红色显示，通过动态属性 calcError 切换 */
+QLineEdit#displayEdit[calcError="true"] {
+    color: #d93025;
+}
+
+/* ---------- 键盘区 ---------- */
+QWidget#keypadWidget {
+    background: #e3e7ec;
+}
+
+QPushButton {
+    border: none;
+    background: #ffffff;
+    color: #202124;
+    min-height: 56px;
+}
+
+/* 数字键 */
+QPushButton[buttonRole="digit"] {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* 四则运算符 */
+QPushButton[buttonRole="operator"] {
+    font-size: 22px;
+    color: #1a73e8;
+}
+
+/* 功能键：%, CE, C, ←, 1/x, x², √x, ± */
+QPushButton[buttonRole="function"] {
+    font-size: 16px;
+    color: #5f6368;
+    background: #f7f9fb;
+}
+
+/* 等号键：整块高亮，视觉重心 */
+QPushButton[buttonRole="equals"] {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    background: #1a73e8;
+}
+
+/* 悬停与按下：按角色分别书写，避免属性选择器与伪状态选择器优先级相同导致相互覆盖 */
+QPushButton[buttonRole="digit"]:hover     { background: #f2f5f9; }
+QPushButton[buttonRole="digit"]:pressed   { background: #dde5ef; }
+QPushButton[buttonRole="operator"]:hover  { background: #eef4fe; }
+QPushButton[buttonRole="operator"]:pressed { background: #dbe8fb; }
+QPushButton[buttonRole="function"]:hover  { background: #edf1f6; }
+QPushButton[buttonRole="function"]:pressed { background: #e0e6ee; }
+QPushButton[buttonRole="equals"]:hover    { background: #2b7fe8; }
+QPushButton[buttonRole="equals"]:pressed  { background: #1666cf; }
+
+/* 说明：键盘输入时 flashButton() 会把按钮置为 down 状态，
+   而 Qt 的 :pressed 伪状态正是由 isDown() 驱动的，因此键盘与鼠标的按下效果自动一致。 */
+
+/* ---------- 提示 ---------- */
+QToolTip {
+    border: 1px solid #d7dbe0;
+    background: #ffffff;
+    color: #3c4043;
+    padding: 4px 8px;
+}
