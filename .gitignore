@@ -1,0 +1,22 @@
+# 构建产物（qmake / MinGW）
+build/
+build-*/
+release/
+debug/
+*.o
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile
+Makefile.*
+.qmake.stash
+
+# 可执行文件
+*.exe
+bin/
+
+# Qt Creator 用户配置
+*.pro.user
+*.pro.user.*
+.vscode/
+.idea/
