@@ -13,12 +13,18 @@ void CalculatorEngine::press(Calc::Key key)
         inputDigit(Calc::digitValue(key));
     } else if (Calc::isBinaryOperator(key)) {
         inputOperator(key);
+    } else if (key == Calc::Key::Dot) {
+        inputDot();
     } else if (key == Calc::Key::Equals) {
         inputEquals();
+    } else if (key == Calc::Key::Backspace) {
+        inputBackspace();
+    } else if (key == Calc::Key::ClearEntry) {
+        inputClearEntry();
     } else if (key == Calc::Key::ClearAll) {
         clearAll();
     }
-    // TODO: 小数点、退格、CE、正负号、百分号等按键陆续实现
+    // TODO: 正负号、百分号等一元运算在后续阶段实现
 
     emit displayChanged();
 }
@@ -43,20 +49,38 @@ void CalculatorEngine::inputDigit(int digit)
         m_entry += text;
     }
 
-    if (m_hasPendingOperator) {
-        m_expression = formatNumber(m_lhs) + QLatin1Char(' ')
-                     + Calc::operatorSymbol(m_pendingOperator) + QLatin1Char(' ')
-                     + m_entry;
+    m_expression = currentExpressionText();
+}
+
+void CalculatorEngine::inputDot()
+{
+    if (m_startNewEntry) {
+        m_entry = QStringLiteral("0.");   // 直接按小数点，自动补前导 0
+        m_startNewEntry = false;
+    } else if (m_entry.contains(QLatin1Char('.'))) {
+        return;                           // 同一个操作数只允许一个小数点，重复输入直接忽略
+    } else {
+        m_entry += QLatin1Char('.');
     }
+
+    m_expression = currentExpressionText();
 }
 
 void CalculatorEngine::inputOperator(Calc::Key op)
 {
+    if (m_hasPendingOperator && m_startNewEntry) {
+        // 还没输入第二个操作数就又按了运算符（如 1 + ×）：
+        // 以最后一次按下的运算符为准，不重复计算
+        m_pendingOperator = op;
+        m_expression = currentExpressionText();
+        return;
+    }
+
     m_lhs = m_entry.toDouble();      // 当前显示值成为左操作数
     m_pendingOperator = op;
     m_hasPendingOperator = true;
     m_startNewEntry = true;
-    m_expression = formatNumber(m_lhs) + QLatin1Char(' ') + Calc::operatorSymbol(op);
+    m_expression = currentExpressionText();
 }
 
 void CalculatorEngine::inputEquals()
@@ -75,6 +99,42 @@ void CalculatorEngine::inputEquals()
                  + QLatin1Char(' ') + rhsText + QStringLiteral(" =");
     m_hasPendingOperator = false;
     m_startNewEntry = true;
+}
+
+void CalculatorEngine::inputBackspace()
+{
+    if (m_startNewEntry)
+        return;                      // 还没有开始输入操作数，没有可删的字符
+
+    if (m_entry.size() <= 1) {
+        m_entry = QStringLiteral("0");
+    } else {
+        m_entry.chop(1);             // 删掉最后一个字符
+        if (m_entry == QLatin1String("-"))
+            m_entry = QStringLiteral("0");
+    }
+
+    m_expression = currentExpressionText();
+}
+
+void CalculatorEngine::inputClearEntry()
+{
+    m_entry = QStringLiteral("0");   // 只清除当前输入，左操作数与运算符保持不变
+    m_startNewEntry = false;
+
+    m_expression = currentExpressionText();
+}
+
+QString CalculatorEngine::currentExpressionText() const
+{
+    if (!m_hasPendingOperator)
+        return QString();
+
+    QString text = formatNumber(m_lhs) + QLatin1Char(' ')
+                 + Calc::operatorSymbol(m_pendingOperator);
+    if (!m_startNewEntry)
+        text += QLatin1Char(' ') + m_entry;   // 第二个操作数边输入边显示
+    return text;
 }
 
 double CalculatorEngine::compute(double lhs, Calc::Key op, double rhs) const

@@ -23,7 +23,7 @@ public:
     // 复位到初始状态
     void clearAll();
 
-    QString displayText() const { return m_entry; }      // 主显示区
+    QString displayText() const { return m_entry; }        // 主显示区
     QString expressionText() const { return m_expression; } // 上方表达式栏
 
     // 结果格式化：去掉浮点误差与多余的 0
@@ -34,8 +34,14 @@ signals:
 
 private:
     void inputDigit(int digit);
+    void inputDot();
     void inputOperator(Calc::Key op);
     void inputEquals();
+    void inputBackspace();
+    void inputClearEntry();
+
+    // 输入操作数过程中，表达式栏应显示的文本（如 "12 × 3"）
+    QString currentExpressionText() const;
 
     double compute(double lhs, Calc::Key op, double rhs) const;
 
