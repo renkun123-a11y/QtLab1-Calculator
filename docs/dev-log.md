@@ -182,3 +182,61 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 | `8 ÷ 0 =` | `除数不能为 0` | `除数不能为 0` |
 | `123 ← ←` | `1` | `1` |
 | 混合输入：`1`(鼠标) `2`(键盘) `+`(鼠标) `3`(键盘) `=`(鼠标) | `15` | — |
+
+## 阶段 7　样式表美化（commit 7）
+
+- 新增 `styles/app.qss` 并打包进 `resources.qrc`，由 `applyStyleSheet()` 载入。
+- 按键按 UI 设计器里设置的动态属性 `buttonRole` 分类选择，样式与界面属性一一对应。
+- 键盘区的"网格线"由 QGridLayout 的 2px 间距透出 `keypadWidget` 底色实现，不需要额外绘制。
+- 错误状态用动态属性 `calcError` + `unpolish/polish` 切换成红色文字
+  （QSS 读不到 C++ 状态，只能通过属性中转）。
+
+样式表的主要片段：
+
+```css
+QPushButton[buttonRole="operator"] { font-size: 22px; color: #1a73e8; }
+QPushButton[buttonRole="equals"]   { font-size: 24px; font-weight: bold;
+                                     color: #ffffff; background: #1a73e8; }
+QLineEdit#displayEdit[calcError="true"] { color: #d93025; }
+```
+
+同时整理了代码结构：按键网格的均分系数改用布局自身的 `rowCount()/columnCount()`，
+去掉硬编码的 6 与 4。
+
+## 阶段 8　自动化测试（commit 8）
+
+新增 `tests/tests.pro` + `tests/tst_calculator.cpp`（QtTest），**直接编译工程源码**，
+测的就是真实程序，共 24 个用例：16 个计算核心用例 + 6 个界面用例 + 1 个截图导出用例。
+
+```bash
+cd build && qmake ../tests.pro && mingw32-make -j8
+./tst_calculator.exe -platform offscreen
+```
+
+测试发现了一个手工点击时漏掉的缺陷：
+
+| 序号 | 测试输入 | 期望 | 实际（修复前） | 结论 |
+| --- | --- | --- | --- | --- |
+| 25 | `12` `+` `34` `CE` | 表达式栏 `12 +` | 表达式栏 `12 + 0` | **缺陷 D** |
+
+- **现象**：在"正在输入第二个操作数"阶段按 CE，表达式栏残留占位的 `12 + 0`，
+  而且下一个数字会被追加（`0` → `05`）。
+- **原因**：`inputClearEntry()` 把 `EnteringSecondOperand` 与 `EnteringFirstOperand`
+  合并处理，清空输入后没有退出"第二个操作数"阶段，于是
+  `currentExpressionText()` 仍然把占位的 `0` 拼进表达式。
+- **修改**：清掉第二个操作数后回到 `OperatorPending`，让表达式栏只显示 `12 +`，
+  下一个数字重新进入 `EnteringSecondOperand`。
+
+```cpp
+case State::EnteringSecondOperand:
+    m_entry = QStringLiteral("0");
+    m_state = State::OperatorPending;   // 回到"等待输入第二个操作数"
+    updateExpression();
+    break;
+```
+
+修复后全部用例通过：`Totals: 24 passed, 0 failed, 1 skipped`。
+
+界面测试中的"鼠标/键盘一致性"用例把同一串输入分别用按钮点击和真实按键事件跑一遍，
+逐条比较显示区文本（`12.5*4=`、`1+2+3=`、`8/0=`、`123BB`、`2+3==`、`16R`、`50%` 等 10 组），
+结果完全一致，说明两条输入路径确实复用了同一套处理逻辑。

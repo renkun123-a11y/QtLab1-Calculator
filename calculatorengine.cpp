@@ -223,8 +223,14 @@ void CalculatorEngine::inputClearEntry()
         m_entry = QStringLiteral("0");
         break;
     case State::EnteringFirstOperand:
-    case State::EnteringSecondOperand:
         m_entry = QStringLiteral("0");
+        updateExpression();
+        break;
+    case State::EnteringSecondOperand:
+        // 清掉正在输入的第二个操作数后要回到"等待输入第二个操作数"，
+        // 否则表达式栏会显示占位的 12 + 0，而且下一个数字会被追加成 0x
+        m_entry = QStringLiteral("0");
+        m_state = State::OperatorPending;
         updateExpression();
         break;
     }
