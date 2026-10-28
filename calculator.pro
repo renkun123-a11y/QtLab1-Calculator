@@ -5,7 +5,11 @@ TARGET    = Calculator
 CONFIG   += c++17 release
 CONFIG   -= debug_and_release debug
 
-HEADERS  += mainwindow.h
-SOURCES  += main.cpp \
+HEADERS  += calckey.h \
+            calculatorengine.h \
+            mainwindow.h
+SOURCES  += calckey.cpp \
+            calculatorengine.cpp \
+            main.cpp \
             mainwindow.cpp
 FORMS    += mainwindow.ui
