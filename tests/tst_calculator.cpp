@@ -623,6 +623,19 @@ void TestCalculator::visualSnapshots()
     clickButtons(&window, QStringLiteral("C"));
     pressKeys(&window, QStringLiteral("845+996="));
     shot(QStringLiteral("07-keyboard-result"));
+
+    // 报告用：异常输入与编辑状态
+    clickButtons(&window, QStringLiteral("C1..5"));
+    shot(QStringLiteral("08-duplicate-dot"));
+
+    clickButtons(&window, QStringLiteral("C12+34E"));
+    shot(QStringLiteral("09-ce-keeps-operator"));
+
+    clickButtons(&window, QStringLiteral("C1NR"));
+    shot(QStringLiteral("10-negative-sqrt"));
+
+    clickButtons(&window, QStringLiteral("C1+2+"));
+    shot(QStringLiteral("11-chained-middle"));
 }
 
 QTEST_MAIN(TestCalculator)
